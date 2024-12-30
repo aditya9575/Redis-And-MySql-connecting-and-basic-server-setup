@@ -1,0 +1,104 @@
+npm install express mysql2 body-parser
+
+const express = require('express');
+const mysql = require('mysql2');
+const bodyParser = require('body-parser');
+
+const app = express();
+const port = 3000;
+
+// Middleware
+app.use(bodyParser.json());
+
+// MySQL Connection
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root', // Replace with your MySQL username
+  password: '', // Replace with your MySQL password
+  database: 'testdb', // Replace with your database name
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error('Error connecting to MySQL:', err.message);
+    return;
+  }
+  console.log('Connected to MySQL');
+});
+
+// CRUD Routes
+
+// Create: Add a new record
+app.post('/users', (req, res) => {
+  const { name, email } = req.body;
+  const sql = 'INSERT INTO users (name, email) VALUES (?, ?)';
+  db.query(sql, [name, email], (err, result) => {
+    if (err) {
+      console.error('Error inserting data:', err.message);
+      res.status(500).send('Failed to add user');
+      return;
+    }
+    res.status(201).send(`User added with ID: ${result.insertId}`);
+  });
+});
+
+// Read: Get all users
+app.get('/users', (req, res) => {
+  const sql = 'SELECT * FROM users';
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error fetching data:', err.message);
+      res.status(500).send('Failed to fetch users');
+      return;
+    }
+    res.status(200).json(results);
+  });
+});
+
+// Update: Update a user's email by ID
+app.put('/users/:id', (req, res) => {
+  const { id } = req.params;
+  const { email } = req.body;
+  const sql = 'UPDATE users SET email = ? WHERE id = ?';
+  db.query(sql, [email, id], (err, result) => {
+    if (err) {
+      console.error('Error updating data:', err.message);
+      res.status(500).send('Failed to update user');
+      return;
+    }
+    res.status(200).send(`Updated user with ID: ${id}`);
+  });
+});
+
+// Delete: Remove a user by ID
+app.delete('/users/:id', (req, res) => {
+  const { id } = req.params;
+  const sql = 'DELETE FROM users WHERE id = ?';
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting data:', err.message);
+      res.status(500).send('Failed to delete user');
+      return;
+    }
+    res.status(200).send(`Deleted user with ID: ${id}`);
+  });
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Explanation
+MySQL Setup:
+
+Replace the host, user, password, and database fields in the mysql.createConnection method with your MySQL credentials.
+Ensure the database (testdb) exists and has a users table with columns id (auto-increment primary key), name, and email.
+SQL for creating the users table in mySql workbench:
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100)
+);
